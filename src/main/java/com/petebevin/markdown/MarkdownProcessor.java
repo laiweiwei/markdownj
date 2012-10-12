@@ -377,7 +377,7 @@ public class MarkdownProcessor {
                 ")" +
                 "((?=^[ ]{0,4}\\S)|\\Z)", Pattern.MULTILINE);
         return markup.replaceAll(p, new Replacement() {
-        			private static final String LANG_IDENTIFIER = "lang:";
+        			Pattern lang_pattern = Pattern.compile("lang:[ \\t]*([\\w\\d]+)");
                     public String replacement(Matcher m) {
                         String codeBlock = m.group(1);
                         TextEditor ed = new TextEditor(codeBlock);
@@ -405,21 +405,21 @@ public class MarkdownProcessor {
                     public boolean isLanguageIdentifier(String line)
                     {
                         if (line == null) return false;
-                        String lang = "";
-                        if (line.startsWith(LANG_IDENTIFIER)) {
-                        	lang = line.replaceFirst(LANG_IDENTIFIER, "").trim();
-                        }
-                        return lang.length() > 0;
+                        Matcher matcher = lang_pattern.matcher(line);
+                        return matcher.find();
                     }
                     
                     public String languageBlock(String firstLine, String text)
                     {
                         // dont'use %n in format string (markdown expects every new line char as "\n")
                         String codeBlockTemplate = getCodeBlockTemplate();
-                        String lang = firstLine.replaceFirst(LANG_IDENTIFIER, "").trim();
+                        Matcher matcher = lang_pattern.matcher(firstLine);
+                        matcher.find();
+                        String lang = matcher.group(1).trim();
                         String block = text.replaceFirst( firstLine+"\n", "");
                         return String.format(codeBlockTemplate, lang, block);
                     }
+                    
                     public String genericCodeBlock(String text)
                     {
                         // dont'use %n in format string (markdown expects every new line char as "\n")
